@@ -1,0 +1,36 @@
+name: Supabase Migration Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase Project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy Migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          # Der Service Role Key wird hier nicht direkt benötigt, da db push die
+          # Verbindung über den Access Token und die Project Ref herstellt.
+          # Falls db push einen direkten DB-Zugriff erfordert, muss der Service Role Key
+          # in der CI/CD-Umgebung als Secret verfügbar sein und ggf. in die supabase/config.toml
+          # oder als Umgebungsvariable übergeben werden. Wir gehen hier vom Standardfall aus.
+          # Die Supabase CLI ist so konzipiert, dass sie die Credentials aus dem Link-Schritt nutzt.
